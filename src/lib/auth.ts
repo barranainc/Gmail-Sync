@@ -123,6 +123,20 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
+    async redirect({ url, baseUrl }) {
+      // If an explicit callbackUrl is set and it's an admin route, allow it
+      if (url.startsWith(baseUrl) && url.includes("/admin")) {
+        return url;
+      }
+      // Default: admins go to inbox, regular users go to external URL
+      // We use a post-login redirect page to check role server-side
+      if (url === baseUrl || url === `${baseUrl}/` || url === `${baseUrl}/inbox`) {
+        return `${baseUrl}/auth/redirect`;
+      }
+      // Allow relative URLs within the app
+      if (url.startsWith(baseUrl)) return url;
+      return `${baseUrl}/auth/redirect`;
+    },
   },
   pages: {
     signIn: "/login",

@@ -65,12 +65,12 @@ export default function AdminDashboard() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [healthRes, accountsRes] = await Promise.all([
-          fetch("/api/admin/health"),
+        const [statsRes, accountsRes] = await Promise.all([
+          fetch("/api/admin/stats"),
           fetch("/api/admin/accounts"),
         ]);
 
-        if (healthRes.ok) setHealth(await healthRes.json());
+        if (statsRes.ok) setHealth(await statsRes.json());
         if (accountsRes.ok) {
           const data = await accountsRes.json();
           setAccounts(data.accounts);

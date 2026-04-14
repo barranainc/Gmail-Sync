@@ -9,7 +9,9 @@ RUN npm ci
 
 COPY . .
 
-RUN npx prisma generate
+RUN npx prisma generate && \
+    printf 'export * from "./client";\nexport * from "./enums";\n' > ./src/generated/prisma/index.ts
+
 RUN npm run build
 
 EXPOSE 3000

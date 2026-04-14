@@ -274,15 +274,32 @@ function EmailListPanel({
 function EmailDetailPanel({
   email,
   loading,
+  onDelete,
 }: {
   email: EmailDetail | null;
   loading: boolean;
+  onDelete: (id: string) => void;
 }) {
   const [showHtml, setShowHtml] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     setShowHtml(false);
   }, [email?.id]);
+
+  async function handleDelete() {
+    if (!email) return;
+    if (!confirm("Move this email to Trash? This will also trash it in the team member's Gmail.")) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/emails/${email.id}`, { method: "DELETE" });
+      if (res.ok) onDelete(email.id);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -323,9 +340,25 @@ function EmailDetailPanel({
           <h2 className="text-xl font-semibold text-gray-900 leading-snug">
             {email.subject || "(no subject)"}
           </h2>
-          <span className="text-xs text-gray-400 whitespace-nowrap mt-1">
-            {new Date(email.internalDate).toLocaleString()}
-          </span>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <span className="text-xs text-gray-400 whitespace-nowrap">
+              {new Date(email.internalDate).toLocaleString()}
+            </span>
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              title="Move to Trash"
+              className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40"
+            >
+              {deleting ? (
+                <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
 
         <div className="space-y-1 text-sm">
@@ -554,7 +587,16 @@ export default function AdminEmailBrowserPage() {
       )}
 
       {/* Pane 3: Email detail */}
-      <EmailDetailPanel email={emailDetail} loading={detailLoading} />
+      <EmailDetailPanel
+        email={emailDetail}
+        loading={detailLoading}
+        onDelete={(id) => {
+          setEmails((prev) => prev.filter((e) => e.id !== id));
+          setEmailDetail(null);
+          setSelectedMessageId(null);
+          setTotal((t) => t - 1);
+        }}
+      />
     </div>
   );
 }

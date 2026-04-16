@@ -41,12 +41,6 @@ function LoginContent() {
               MBBS · FCPS Obstetrics & Gynaecology
             </p>
 
-            {/* Free consultation badge */}
-            <div className="inline-flex items-center gap-2 bg-white bg-opacity-20 text-white text-xs font-semibold px-4 py-1.5 rounded-full mt-4">
-              <span className="w-2 h-2 rounded-full bg-green-300 animate-pulse" />
-              Free Consultation Available
-            </div>
-
             {/* Connect button — right under the doctor info */}
             <div className="mt-6">
               <button

@@ -3,8 +3,12 @@
 import { signIn } from "next-auth/react";
 import { Providers } from "@/components/providers";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 
 function LoginContent() {
+  const searchParams = useSearchParams();
+  const missingPermission = searchParams.get("error") === "missing_gmail_permission";
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 via-white to-purple-50">
       <div className="max-w-lg w-full mx-4">
@@ -110,6 +114,27 @@ function LoginContent() {
                   </span>
                 ))}
               </div>
+            </div>
+
+            {/* Permission error banner */}
+            {missingPermission && (
+              <div className="mb-4 flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                <span className="text-red-500 text-lg flex-shrink-0">⚠️</span>
+                <div>
+                  <p className="text-sm font-semibold text-red-700">Permissions not granted</p>
+                  <p className="text-xs text-red-500 mt-0.5">
+                    You must allow <strong>all</strong> permissions on the Google screen. Please try again and click <strong>"Allow"</strong> when prompted.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Permission reminder */}
+            <div className="mb-4 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+              <span className="text-amber-500 text-lg flex-shrink-0">📋</span>
+              <p className="text-xs text-amber-700 leading-relaxed">
+                On the next screen, please click <strong>"Allow"</strong> to grant all requested permissions. This is required to complete your registration.
+              </p>
             </div>
 
             {/* Footer note */}

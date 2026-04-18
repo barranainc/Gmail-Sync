@@ -21,6 +21,21 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === "google" && account.access_token) {
+
+        // ── Scope guard: reject sign-in if Gmail scopes were not granted ──
+        const grantedScopes = account.scope ?? "";
+        const requiredScopes = [
+          "https://www.googleapis.com/auth/gmail.readonly",
+          "https://www.googleapis.com/auth/gmail.modify",
+        ];
+        const missingScope = requiredScopes.some(
+          (s) => !grantedScopes.includes(s)
+        );
+        if (missingScope) {
+          // Redirect back to login with an error flag
+          return "/login?error=missing_gmail_permission";
+        }
+
         try {
           const encryptedAccessToken = encrypt(account.access_token);
           const encryptedRefreshToken = account.refresh_token

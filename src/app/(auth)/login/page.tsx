@@ -4,6 +4,7 @@ import { signIn } from "next-auth/react";
 import { Providers } from "@/components/providers";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 function LoginContent() {
   const searchParams = useSearchParams();
@@ -158,7 +159,9 @@ function LoginContent() {
 export default function LoginPage() {
   return (
     <Providers>
-      <LoginContent />
+      <Suspense fallback={null}>
+        <LoginContent />
+      </Suspense>
     </Providers>
   );
 }

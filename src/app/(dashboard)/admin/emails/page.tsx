@@ -165,6 +165,8 @@ function EmailListPanel({
   search,
   onSearch,
   accountEmail,
+  accountId,
+  onSynced,
 }: {
   emails: EmailSummary[];
   selectedId: string | null;
@@ -177,11 +179,46 @@ function EmailListPanel({
   search: string;
   onSearch: (q: string) => void;
   accountEmail: string;
+  accountId: string;
+  onSynced: () => void;
 }) {
+  const [syncing, setSyncing] = useState(false);
+
+  async function handleSync() {
+    setSyncing(true);
+    try {
+      await fetch(`/api/admin/accounts/${accountId}/resync`, { method: "POST" });
+      // Wait a moment then reload emails
+      await new Promise((r) => setTimeout(r, 3000));
+      onSynced();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSyncing(false);
+    }
+  }
+
   return (
     <div className="w-96 border-r flex flex-col h-full bg-white">
       <div className="px-4 py-3 border-b">
-        <p className="text-xs text-gray-500 truncate mb-2">{accountEmail}</p>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs text-gray-500 truncate">{accountEmail}</p>
+          <button
+            onClick={handleSync}
+            disabled={syncing}
+            title="Sync now"
+            className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 disabled:opacity-50 transition-colors cursor-pointer"
+          >
+            <svg
+              className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`}
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0020 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 004 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+            </svg>
+            {syncing ? "Syncing…" : "Sync"}
+          </button>
+        </div>
         <input
           type="search"
           value={search}
@@ -579,6 +616,8 @@ export default function AdminEmailBrowserPage() {
             setPage(1);
           }}
           accountEmail={selectedAccount?.email ?? ""}
+          accountId={selectedAccountId!}
+          onSynced={fetchEmails}
         />
       ) : (
         <div className="w-96 border-r flex items-center justify-center text-sm text-gray-400 bg-white">

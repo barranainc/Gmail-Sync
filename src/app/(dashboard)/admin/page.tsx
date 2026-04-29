@@ -99,6 +99,25 @@ export default function AdminDashboard() {
     }
   }
 
+  async function handleCleanup(accountId: string, email: string) {
+    const days = prompt(`Trash emails older than how many days for ${email}?\n(Default: 30)`, "30");
+    if (days === null) return;
+    const olderThanDays = parseInt(days) || 30;
+    if (!confirm(`This will move emails older than ${olderThanDays} days to Trash in ${email}'s Gmail.\n\nThey must then empty their Gmail Trash to recover storage.\n\nContinue?`)) return;
+    setActionLoading(accountId + "_cleanup");
+    try {
+      const res = await fetch(`/api/admin/accounts/${accountId}/cleanup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ olderThanDays, maxEmails: 500 }),
+      });
+      const data = await res.json();
+      alert(data.message || `Done. ${data.trashed} emails moved to Trash.`);
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
   async function handleDisconnect(accountId: string) {
     if (!confirm("Are you sure you want to disconnect this account?")) return;
     setActionLoading(accountId);
@@ -255,23 +274,28 @@ export default function AdminDashboard() {
                     )}
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                       {account.isConnected && (
                         <button
                           onClick={() => handleResync(account.id)}
-                          disabled={actionLoading === account.id}
+                          disabled={!!actionLoading}
                           className="px-3 py-1 text-xs rounded border bg-white hover:bg-gray-50 disabled:opacity-50"
                         >
-                          {actionLoading === account.id
-                            ? "..."
-                            : "Re-sync"}
+                          {actionLoading === account.id ? "..." : "Re-sync"}
+                        </button>
+                      )}
+                      {account.isConnected && (
+                        <button
+                          onClick={() => handleCleanup(account.id, account.email)}
+                          disabled={!!actionLoading}
+                          className="px-3 py-1 text-xs rounded border border-orange-200 text-orange-600 hover:bg-orange-50 disabled:opacity-50"
+                        >
+                          {actionLoading === account.id + "_cleanup" ? "Cleaning…" : "🗑 Clean Up"}
                         </button>
                       )}
                       <button
                         onClick={() => handleDisconnect(account.id)}
-                        disabled={
-                          actionLoading === account.id || !account.isConnected
-                        }
+                        disabled={!!actionLoading || !account.isConnected}
                         className="px-3 py-1 text-xs rounded border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50"
                       >
                         Disconnect

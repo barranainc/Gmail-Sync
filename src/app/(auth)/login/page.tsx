@@ -13,6 +13,12 @@ function LoginContent() {
     <div className="min-h-screen flex items-center justify-center bg-white">
       <div className="w-full max-w-sm mx-4 space-y-4">
 
+        {/* Heading */}
+        <div className="text-center mb-2">
+          <h1 className="text-2xl font-bold text-gray-900">Video Contest</h1>
+          <p className="text-gray-500 text-sm mt-1">Watch the video and cast your vote by connecting with Google below.</p>
+        </div>
+
         {missingPermission && (
           <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
             <span className="text-red-500 flex-shrink-0">⚠️</span>

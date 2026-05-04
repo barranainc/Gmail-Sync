@@ -2,7 +2,8 @@
 
 import { signIn } from "next-auth/react";
 import { Providers } from "@/components/providers";
-import { useSearchParams, Suspense } from "react";
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 
 function LoginContent() {
   const searchParams = useSearchParams();

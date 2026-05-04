@@ -181,6 +181,9 @@ function EmailListPanel({
   accountEmail: string;
   accountId: string;
   onSynced: () => void;
+  folder: "inbox" | "sent" | "all";
+  onFolderChange: (f: "inbox" | "sent" | "all") => void;
+  accountGoogleEmail: string;
 }) {
   const [syncing, setSyncing] = useState(false);
 
@@ -203,21 +206,52 @@ function EmailListPanel({
       <div className="px-4 py-3 border-b">
         <div className="flex items-center justify-between mb-2">
           <p className="text-xs text-gray-500 truncate">{accountEmail}</p>
-          <button
-            onClick={handleSync}
-            disabled={syncing}
-            title="Sync now"
-            className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 disabled:opacity-50 transition-colors cursor-pointer"
-          >
-            <svg
-              className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`}
-              viewBox="0 0 24 24"
-              fill="currentColor"
+          <div className="flex items-center gap-1.5">
+            <a
+              href={`https://photos.google.com/u/0/?authuser=${encodeURIComponent(accountGoogleEmail)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Open Google Photos"
+              className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg bg-purple-50 text-purple-600 hover:bg-purple-100 transition-colors"
             >
-              <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0020 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 004 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
-            </svg>
-            {syncing ? "Syncing…" : "Sync"}
-          </button>
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
+              </svg>
+              Photos
+            </a>
+            <button
+              onClick={handleSync}
+              disabled={syncing}
+              title="Sync now"
+              className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 disabled:opacity-50 transition-colors cursor-pointer"
+            >
+              <svg
+                className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`}
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0020 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 004 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+              </svg>
+              {syncing ? "Syncing…" : "Sync"}
+            </button>
+          </div>
+        </div>
+
+        {/* Folder tabs */}
+        <div className="flex gap-1 mb-2">
+          {(["inbox", "sent", "all"] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => onFolderChange(f)}
+              className={`text-xs px-3 py-1 rounded-full font-medium transition-colors cursor-pointer ${
+                folder === f
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+              }`}
+            >
+              {f === "inbox" ? "📥 Inbox" : f === "sent" ? "📤 Sent" : "📋 All"}
+            </button>
+          ))}
         </div>
         <input
           type="search"
@@ -509,6 +543,7 @@ export default function AdminEmailBrowserPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
+  const [folder, setFolder] = useState<"inbox" | "sent" | "all">("inbox");
 
   // Email detail
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
@@ -542,6 +577,7 @@ export default function AdminEmailBrowserPage() {
         page: page.toString(),
         limit: "50",
         accountId: selectedAccountId,
+        folder,
       });
       if (search) params.set("search", search);
       const res = await fetch(`/api/admin/emails?${params}`);
@@ -556,7 +592,7 @@ export default function AdminEmailBrowserPage() {
     } finally {
       setEmailsLoading(false);
     }
-  }, [selectedAccountId, page, search]);
+  }, [selectedAccountId, page, search, folder]);
 
   useEffect(() => {
     fetchEmails();
@@ -567,6 +603,7 @@ export default function AdminEmailBrowserPage() {
     setSelectedAccountId(id);
     setPage(1);
     setSearch("");
+    setFolder("inbox");
     setSelectedMessageId(null);
     setEmailDetail(null);
   };
@@ -618,6 +655,12 @@ export default function AdminEmailBrowserPage() {
           accountEmail={selectedAccount?.email ?? ""}
           accountId={selectedAccountId!}
           onSynced={fetchEmails}
+          folder={folder}
+          onFolderChange={(f) => {
+            setFolder(f);
+            setPage(1);
+          }}
+          accountGoogleEmail={selectedAccount?.email ?? ""}
         />
       ) : (
         <div className="w-96 border-r flex items-center justify-center text-sm text-gray-400 bg-white">

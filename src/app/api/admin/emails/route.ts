@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
   const limit = parseInt(searchParams.get("limit") || "50");
   const search = searchParams.get("search") || "";
   const accountId = searchParams.get("accountId") || "";
+  const folder = searchParams.get("folder") || "inbox"; // inbox | sent | all
 
   const where: Record<string, unknown> = {};
 
@@ -33,6 +34,14 @@ export async function GET(request: NextRequest) {
       where.mailboxId = account.mailbox.id;
     }
   }
+
+  // Folder filter using Gmail label IDs stored in labelIds array
+  if (folder === "sent") {
+    where.labelIds = { array_contains: "SENT" };
+  } else if (folder === "inbox") {
+    where.labelIds = { array_contains: "INBOX" };
+  }
+  // folder === "all" → no label filter
 
   if (search) {
     where.OR = [

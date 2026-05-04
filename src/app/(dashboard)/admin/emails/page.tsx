@@ -167,6 +167,9 @@ function EmailListPanel({
   accountEmail,
   accountId,
   onSynced,
+  folder,
+  onFolderChange,
+  accountGoogleEmail,
 }: {
   emails: EmailSummary[];
   selectedId: string | null;

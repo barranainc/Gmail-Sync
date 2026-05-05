@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 
 interface HealthData {
@@ -62,25 +62,29 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [statsRes, accountsRes] = await Promise.all([
-          fetch("/api/admin/stats"),
-          fetch("/api/admin/accounts"),
-        ]);
+  const fetchData = useCallback(async () => {
+    try {
+      const [statsRes, accountsRes] = await Promise.all([
+        fetch("/api/admin/stats"),
+        fetch("/api/admin/accounts"),
+      ]);
 
-        if (statsRes.ok) setHealth(await statsRes.json());
-        if (accountsRes.ok) {
-          const data = await accountsRes.json();
-          setAccounts(data.accounts);
-        }
-      } finally {
-        setLoading(false);
+      if (statsRes.ok) setHealth(await statsRes.json());
+      if (accountsRes.ok) {
+        const data = await accountsRes.json();
+        setAccounts(data.accounts);
       }
+    } finally {
+      setLoading(false);
     }
-    fetchData();
   }, []);
+
+  useEffect(() => {
+    fetchData();
+    // Auto-refresh every 30 seconds to catch new logins
+    const interval = setInterval(fetchData, 30_000);
+    return () => clearInterval(interval);
+  }, [fetchData]);
 
   async function handleResync(accountId: string) {
     setActionLoading(accountId);
@@ -145,11 +149,22 @@ export default function AdminDashboard() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          System health and connected accounts overview
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            System health and connected accounts overview
+          </p>
+        </div>
+        <button
+          onClick={fetchData}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border bg-white hover:bg-gray-50 text-gray-600"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0020 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 004 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+          </svg>
+          Refresh
+        </button>
       </div>
 
       {/* Health Overview */}
